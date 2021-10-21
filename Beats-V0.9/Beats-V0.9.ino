@@ -17,7 +17,7 @@ const byte Muxs[] = {11, 12, 13};
 
 const byte Gates[] = {A0, A1, A2, A3, A4, A5, 8, 9};
 byte Pattern = 0;
-byte Patterns[2][16] = {{
+byte Patterns[3][16] = {{
     0x01
     , 0xC0
     , 0x08
@@ -39,49 +39,51 @@ byte Patterns[2][16] = {{
     , 0x92
   },
   { 0x01
-    , 0x02
-    , 0x04
+    , 0xC0
     , 0x08
-
-    , 0x10
-    , 0x20
-    , 0x40
-    , 0x80
+    , 0x94
 
     , 0x01
-    , 0x02
-    , 0x04
+    , 0xA0
     , 0x08
+    , 0x84
 
-    , 0x10
-    , 0x20
-    , 0x40
+    , 0x01
+    , 0xc0
+    , 0x08
+    , 0x84
+
+    , 0x01
+    , 0xA0
+    , 0x89
+    , 0x92
+  },
+  { 0x83
+    , 0x00
     , 0x80
+    , 0x00
+
+    , 0x88
+    , 0x00
+    , 0x80
+    , 0x00
+
+    , 0x83
+    , 0x00
+    , 0x80
+    , 0x00
+
+    , 0x0C
+    , 0x82
+    , 0x04
+    , 0x82
   }
 
 };
 
 
 /*
-   {0x01
-                ,0xC0
-                ,0x08
-                ,0x94
 
-                ,0x01
-                ,0xA0
-                ,0x08
-                ,0x84
-
-                ,0x01
-                ,0xc0
-                ,0x08
-                ,0x84
-
-                ,0x01
-                ,0xA0
-                ,0x89
-                ,0x92}
 */
 
 int GateTime = 50; //How long the gate will be high.
@@ -111,27 +113,27 @@ void clearMuxs() {
 }
 
 /***  Debug variables
- *   
- */
+
+*/
 
 //int MuxCount=0;
 
 void WriteMux(int n) {
-//Debug
-/*
-clearMuxs();
-digitalWrite(Muxs[MuxCount],HIGH);
-MuxCount++;
-if (MuxCount >=3)
-   MuxCount=0;
-//endDebug
+  //Debug
+  /*
+    clearMuxs();
+    digitalWrite(Muxs[MuxCount],HIGH);
+    MuxCount++;
+    if (MuxCount >=3)
+     MuxCount=0;
+    //endDebug
 
-*/
+  */
   for (int i = 0; i < 3; i++) {
     digitalWrite(Muxs[i], (n & 0x01));
     n >> 0x1;
   }
-  
+
 }
 
 
@@ -186,22 +188,13 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(clockIn), clockChange, RISING);
 }
 
+byte PatternMap[] = {1, 0, 2}; //Used to convert Switch positions to pattern number (center is 0 on the switch)
+
 void getPatternNum() {
-  if (digitalRead(dirSW2) == HIGH) {
-    digitalWrite(Gates[7],HIGH);
-    Pattern = 0;
-  } else {
-    Pattern = 1;
-     digitalWrite(Gates[7],LOW);
-  }
-  if (digitalRead(dirSW1) == HIGH) {
-    digitalWrite(Gates[0],HIGH);
-    
-  } else {
-    
-     digitalWrite(Gates[0],LOW);
-  }
-  
+  byte SW1 = digitalRead(dirSW1);
+  byte SW2 = digitalRead(dirSW2);
+  byte rPattern = SW1 + 2 * SW2;
+  Pattern = PatternMap[rPattern];
 }
 
 // the loop function runs over and over again forever
