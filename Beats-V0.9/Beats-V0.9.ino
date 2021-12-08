@@ -23,31 +23,35 @@ byte State = Running;
 
 const byte Gates[] = {A0, A1, A2, A3, A4, A5, 8, 9};
 byte Pattern = 0;
+byte Seq[] = {1, 1, 1, 0}; //when switch is centered patterns play in this order.
+byte SeqCount = 0;
+byte PatternMap[] = {1, 0, 2}; //Used to convert Switch positions to pattern number (center is 0 on the switch)
+byte rPattern = 0;
 byte Patterns[3][16] = {{
-    0x01  //P0
-    , 0xC0
-    , 0x08
-    , 0x94
+      0xA3  //P0
+    , 0x00
+    , 0x8A
+    , 0x10
 
-    , 0x01
-    , 0xA0
-    , 0x08
-    , 0x84
+    , 0x83
+    , 0x0
+    , 0x88
+    , 0x10
 
-    , 0x01
-    , 0xc0
-    , 0x08
-    , 0x84
+    , 0x83
+    , 0x0
+    , 0x88
+    , 0x04
 
-    , 0x01
-    , 0xA0
-    , 0x89
-    , 0x92
+    , 0x93
+    , 0x8C
+    , 0x9B
+    , 0x8D
   },
   { 0xA3   //p1
     , 0x80
     , 0x80
-    , 0x85
+    , 0x84
 
     , 0x03
     , 0x80
@@ -95,7 +99,7 @@ byte Patterns[3][16] = {{
 byte States[] = {false, false, false, false, false, false, false, false};
 // the setup function runs once when you press reset or power the board
 void setup() {
-
+   
   int i = 0;
   for (i = 0; i < 8; i++) {
     pinMode(Gates[i], OUTPUT);
@@ -107,6 +111,9 @@ void setup() {
   pinMode(dirSW2, INPUT);
   pinMode(playBut, INPUT);
   pinMode(reset, INPUT);
+
+  //flash(15);
+  
   for (int i = 0; i < 8; i++) {
     States[i] = !States[i];
     digitalWrite(Gates[i], States[i]);
@@ -124,19 +131,66 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(clockIn), clockChange, RISING);
 }
 
+
+void intDelay(unsigned long Time){
+  interrupts();
+  unsigned long startTime=micros();
+  while(micros()-startTime<Time*1000);
+}
+
+void flash (int n) {
+  
+  
+  for (int i = 0; i < n; i++) {
+    digitalWrite(playLED, HIGH);
+    intDelay(200);
+    digitalWrite(playLED, LOW);
+    intDelay(200);
+  }
+  
+}
+
 int GateTime = 50; //How long the gate will be high.
 
 int n = 0;
 
-void clockChange() {
-  if (State == Running) {
-    WritePattern(n);   // turn the LED on (HIGH is the voltage level)
-    n++;
-    if (n >= 8)
-      n = 0;
+int getPatternNum() {
+  byte SW1 = digitalRead(dirSW1);
+  byte SW2 = digitalRead(dirSW2);
+
+
+  return (SW1 + 2 * SW2);
+
+}
+void CheckNextPattern() {
+  int rPattern = getPatternNum();
+  if (rPattern > 0) {
+    Pattern = rPattern;
+  } else {
+    Pattern = Seq[SeqCount];
   }
-  if (digitalRead(reset)==LOW){
-    n=0;
+
+  
+}
+
+void clockChange() {
+  //flash(Pattern+1);
+  if (State == Running) {
+    WritePattern(n);
+    n++;
+    if (n >= 16){
+       n = 0;
+
+       SeqCount++;
+       if (SeqCount > 3)
+         SeqCount = 0;
+       CheckNextPattern();
+    }
+  }
+  if (digitalRead(reset) == LOW) {
+    n = 0;
+    CheckNextPattern();
+    SeqCount = 0;
   }
 }
 
@@ -194,7 +248,7 @@ void WritePattern(int n) {
     digitalWrite(Gates[i], (Beats & 0x01));
     Beats = Beats >> 0x1;
   }
-  WriteMux(n);
+  WriteMux(n & 0x07);
   delay(GateTime);// wait gatetime Ms (this will effect the max tempo
   clearGates();
   digitalWrite(playLED, LOW);
@@ -202,20 +256,15 @@ void WritePattern(int n) {
 
 
 
-byte PatternMap[] = {1, 0, 2}; //Used to convert Switch positions to pattern number (center is 0 on the switch)
 
-void getPatternNum() {
-  byte SW1 = digitalRead(dirSW1);
-  byte SW2 = digitalRead(dirSW2);
-  byte rPattern = SW1 + 2 * SW2;
-  Pattern = PatternMap[rPattern];
-}
+
+
 
 // the loop function runs over and over again forever
 
 void loop() {
   // wait for a second
   readGateLength();
-  getPatternNum();
+
   playButton();
 }
