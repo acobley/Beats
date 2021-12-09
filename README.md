@@ -5,6 +5,14 @@ This is a rhythm machine for the GMSN! Sequencer. Three patterns are stored in t
 When running the voltage out is set by the sliders (aa per a sequencer) so can be hooked to a VCA to giv accent , VFC for motion filtering etc. 
 
 
+The Direction switch set the pattern:
+
+Left Beat 1
+Right Beat 2
+Center play sequence of beats.
+
+To calculate the beat patterns array, use the BeatCalc Excel file.
+
 ## Licence
 CC4.0
 
