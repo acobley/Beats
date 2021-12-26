@@ -5,6 +5,8 @@
 //4 Snare
 //8 Short cymbal
 
+#include "inc/BeatPatterns.h"
+
 const byte clockIn = 2;
 const byte GateKnob = A7;
 const byte playLED = 5;
@@ -23,78 +25,10 @@ byte State = Running;
 
 const byte Gates[] = {A0, A1, A2, A3, A4, A5, 8, 9};
 byte Pattern = 0;
-byte Seq[] = {1, 1, 1, 0}; //when switch is centered patterns play in this order.
 byte SeqCount = 0;
 byte PatternMap[] = {1, 0, 2}; //Used to convert Switch positions to pattern number (center is 0 on the switch)
 byte rPattern = 0;
-byte Patterns[3][16] = {{
-      0xA3  //P0
-    , 0x00
-    , 0x8A
-    , 0x10
 
-    , 0x83
-    , 0x0
-    , 0x88
-    , 0x10
-
-    , 0x83
-    , 0x0
-    , 0x88
-    , 0x04
-
-    , 0x93
-    , 0x8C
-    , 0x9B
-    , 0x8D
-  },
-  { 0xA3   //p1
-    , 0x80
-    , 0x80
-    , 0x84
-
-    , 0x03
-    , 0x80
-    , 0x88
-    , 0x85
-
-    , 0x83
-    , 0x80
-    , 0x88
-    , 0x84
-
-    , 0x81
-    , 0x81
-    , 0x89
-    , 0x83
-  },
-  { 0x83 //P2
-    , 0x00
-    , 0x80
-    , 0x00
-
-    , 0x88
-    , 0x00
-    , 0x80
-    , 0x00
-
-    , 0x83
-    , 0x00
-    , 0x80
-    , 0x00
-
-    , 0x0C
-    , 0x82
-    , 0x04
-    , 0x82
-  }
-
-};
-
-
-/*
-
-*/
 
 byte States[] = {false, false, false, false, false, false, false, false};
 // the setup function runs once when you press reset or power the board
@@ -249,15 +183,12 @@ void WritePattern(int n) {
     Beats = Beats >> 0x1;
   }
   WriteMux(n & 0x07);
+  interrupts(); //the delay function won't work in an interrupt unless interrupts are enabled.
   delay(GateTime);// wait gatetime Ms (this will effect the max tempo
+  noInterrupts();
   clearGates();
   digitalWrite(playLED, LOW);
 }
-
-
-
-
-
 
 
 // the loop function runs over and over again forever
